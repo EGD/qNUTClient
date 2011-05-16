@@ -1,0 +1,8 @@
+qNutClient
+---------
+Qt based GUI client for monitoring UPS.
+
+This project is attempt of a spelling of the client for monitoring
+of the UPS for  learning С++ and Qt, and as derivings as a result
+of the suitable monitor program of operation of the UPS on Qt4
+(as kNUTClient).
