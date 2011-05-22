@@ -10,11 +10,18 @@ class upsClient : public QObject
     Q_OBJECT
 
 public:
-    upsClient(const QString &host, const int port);
+    upsClient(const QString &host, const qint16 &port);
     ~upsClient();
 
-//private:
+    upsClient const *sendCmd(const QString &command);
+    void connect();
     QTcpSocket *ASocket;
+
+private:
+    //QTcpSocket *ASocket;
+    QString ups_host;
+    qint16 ups_port;
+    Q_DISABLE_COPY(upsClient)
 
 private slots:
     void slotError(QAbstractSocket::SocketError);
@@ -35,10 +42,13 @@ public:
 private:
     Ui::MainWindow *ui;
     upsClient *client;
+    QTimer *getVars;
 
 private slots:
     void slotConnected();
+    void slotDisconnected();
     void slotReadyRead();
+    void slotGetVars();
 };
 
 #endif // MAINWINDOW_H

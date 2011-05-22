@@ -8,12 +8,22 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     client = new upsClient("localhost", 3493);
     QObject::connect(client->ASocket, SIGNAL(connected()), this, SLOT(slotConnected()));
+    QObject::connect(client->ASocket, SIGNAL(disconnected()), this, SLOT(slotDisconnected()));
+
+    client->connect();
     QObject::connect(client->ASocket, SIGNAL(readyRead()), this, SLOT(slotReadyRead()));
+
+    getVars = new QTimer(this);
+
+    QObject::connect(getVars, SIGNAL(timeout()), this, SLOT(slotGetVars()));
+
+    getVars->start(1500);
 }
 
 MainWindow::~MainWindow()
 {
     delete client;
+    delete getVars;
     delete ui;
 }
 
@@ -21,35 +31,56 @@ void MainWindow::slotConnected()
 {
     qDebug() << "CONNECTED";
 //Autohorize
-    client->ASocket->write(QString("USERNAME %1\n").arg("upsmaster").toAscii());
-    client->ASocket->write(QString("PASSWORD %1\n").arg("fcd3e41583").toAscii());
-    client->ASocket->write(QString("LOGIN %1\n").arg("myups").toAscii());
+    client->sendCmd(QString("USERNAME %1\n").arg("upsmaster"));
+    client->sendCmd(QString("PASSWORD %1\n").arg("fcd3e41583"));
+    client->sendCmd(QString("LOGIN %1\n").arg("myups"));
     client->ASocket->waitForBytesWritten();
-    qDebug() << "AUTH SEND";
+    qDebug("AUTH SEND");
+}
+
+void MainWindow::slotDisconnected()
+{
+    getVars->stop();
 }
 
 void MainWindow::slotReadyRead()
 {
     qDebug() << "READY_READ";
-    QTextStream in(client->ASocket);
+    QTextStream in(client->ASocket->readAll());
     ui->textLines->append(in.readAll());
 }
 
-upsClient::upsClient(const QString &host, const int port)
+void MainWindow::slotGetVars()
+{
+    ui->textLines->clear();
+    client->sendCmd(QString("LIST VAR %1\n").arg("myups"));
+}
+
+upsClient::upsClient(const QString &host, const qint16 &port) : ups_host(host), ups_port(port)
 {
     ASocket = new QTcpSocket(this);
 
     QObject::connect(ASocket, SIGNAL(error(QAbstractSocket::SocketError)),
                      this, SLOT(slotError(QAbstractSocket::SocketError)));
-
-    ASocket->connectToHost(host, port, QIODevice::ReadWrite);
 }
 
 upsClient::~upsClient()
 {
+    ASocket->write(QString("LOGOUT").toAscii());
     ASocket->disconnectFromHost();
     qDebug() << "DISCONNECTED";
     delete ASocket;
+}
+
+void upsClient::connect()
+{
+    ASocket->connectToHost(ups_host, ups_port, QIODevice::ReadWrite);
+}
+
+upsClient const *upsClient::sendCmd(const QString &command)
+{
+    ASocket->write(command.toAscii());
+    return this;
 }
 
 void upsClient::slotError(QAbstractSocket::SocketError err)
