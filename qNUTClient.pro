@@ -11,8 +11,10 @@ TEMPLATE = app
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    upsclient.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    upsclient.h
 
 FORMS    += mainwindow.ui

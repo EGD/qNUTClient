@@ -3,29 +3,7 @@
 
 #include <QMainWindow>
 #include <QtGui>
-#include <QtNetwork/QTcpSocket>
-
-class upsClient : public QObject
-{
-    Q_OBJECT
-
-public:
-    upsClient(const QString &host, const qint16 &port);
-    ~upsClient();
-
-    upsClient const *sendCmd(const QString &command);
-    void connect();
-    QTcpSocket *ASocket;
-
-private:
-    //QTcpSocket *ASocket;
-    QString ups_host;
-    qint16 ups_port;
-    Q_DISABLE_COPY(upsClient)
-
-private slots:
-    void slotError(QAbstractSocket::SocketError);
-};
+#include "upsclient.h"
 
 namespace Ui {
     class MainWindow;
@@ -49,6 +27,7 @@ private slots:
     void slotDisconnected();
     void slotReadyRead();
     void slotGetVars();
+    void slotError(QAbstractSocket::SocketError);
 };
 
 #endif // MAINWINDOW_H

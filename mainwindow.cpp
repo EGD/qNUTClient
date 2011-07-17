@@ -1,20 +1,19 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-MainWindow::MainWindow(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MainWindow)
+MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
     client = new upsClient("localhost", 3493);
-    QObject::connect(client->ASocket, SIGNAL(connected()), this, SLOT(slotConnected()));
-    QObject::connect(client->ASocket, SIGNAL(disconnected()), this, SLOT(slotDisconnected()));
+    QObject::connect(client, SIGNAL(connectedUPS()), this, SLOT(slotConnected()));
+    QObject::connect(client, SIGNAL(disconnectedUPS()), this, SLOT(slotDisconnected()));
+    QObject::connect(client, SIGNAL(readyReadUPS()), this, SLOT(slotReadyRead()));
+    QObject::connect(client, SIGNAL(errorUPS(QAbstractSocket::SocketError)),
+                     this, SLOT(slotError(QAbstractSocket::SocketError)));
 
-    client->connect();
-    QObject::connect(client->ASocket, SIGNAL(readyRead()), this, SLOT(slotReadyRead()));
+    client->connectToUPS(QString("upsmaster"), QString("fcd3e41583"), QString("myups"));
 
     getVars = new QTimer(this);
-
     QObject::connect(getVars, SIGNAL(timeout()), this, SLOT(slotGetVars()));
 
     getVars->start(1500);
@@ -29,13 +28,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::slotConnected()
 {
-    qDebug() << "CONNECTED";
-//Autohorize
-    client->sendCmd(QString("USERNAME %1\n").arg("upsmaster"));
-    client->sendCmd(QString("PASSWORD %1\n").arg("fcd3e41583"));
-    client->sendCmd(QString("LOGIN %1\n").arg("myups"));
-    client->ASocket->waitForBytesWritten();
-    qDebug("AUTH SEND");
+//    getVars->start(1500);
 }
 
 void MainWindow::slotDisconnected()
@@ -45,9 +38,8 @@ void MainWindow::slotDisconnected()
 
 void MainWindow::slotReadyRead()
 {
-    qDebug() << "READY_READ";
-    QTextStream in(client->ASocket->readAll());
-    ui->textLines->append(in.readAll());
+    qDebug("READY_READ");
+    ui->textLines->append(client->getValueAll());
 }
 
 void MainWindow::slotGetVars()
@@ -56,34 +48,7 @@ void MainWindow::slotGetVars()
     client->sendCmd(QString("LIST VAR %1\n").arg("myups"));
 }
 
-upsClient::upsClient(const QString &host, const qint16 &port) : ups_host(host), ups_port(port)
-{
-    ASocket = new QTcpSocket(this);
-
-    QObject::connect(ASocket, SIGNAL(error(QAbstractSocket::SocketError)),
-                     this, SLOT(slotError(QAbstractSocket::SocketError)));
-}
-
-upsClient::~upsClient()
-{
-    ASocket->write(QString("LOGOUT").toAscii());
-    ASocket->disconnectFromHost();
-    qDebug() << "DISCONNECTED";
-    delete ASocket;
-}
-
-void upsClient::connect()
-{
-    ASocket->connectToHost(ups_host, ups_port, QIODevice::ReadWrite);
-}
-
-upsClient const *upsClient::sendCmd(const QString &command)
-{
-    ASocket->write(command.toAscii());
-    return this;
-}
-
-void upsClient::slotError(QAbstractSocket::SocketError err)
+void MainWindow::slotError(QAbstractSocket::SocketError err)
 {
     QString errStr;
     switch (err) {
@@ -97,7 +62,7 @@ void upsClient::slotError(QAbstractSocket::SocketError err)
         errStr = "The connection was refused.";
         break;
     default:
-        errStr = ASocket->errorString();
+        errStr = client->errorString();
         break;
     }
 
