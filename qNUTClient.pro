@@ -9,6 +9,7 @@ QT       += core gui network
 TARGET = qNUTClient
 TEMPLATE = app
 
+QMAKE_CXXFLAGS_DEBUG += -D DEBUG
 
 SOURCES += main.cpp\
         mainwindow.cpp \
@@ -18,3 +19,6 @@ HEADERS  += mainwindow.h \
     upsclient.h
 
 FORMS    += mainwindow.ui
+
+OTHER_FILES += \
+    VAR_LIST.txt

@@ -14,9 +14,8 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
     client->connectToUPS(QString("upsmaster"), QString("fcd3e41583"), QString("myups"));
 
     getVars = new QTimer(this);
-    QObject::connect(getVars, SIGNAL(timeout()), this, SLOT(slotGetVars()));
-
-    getVars->start(1500);
+    getVars->setInterval(1500);
+    QObject::connect(getVars, SIGNAL(timeout()), this, SLOT(slotGetVars()));    
 }
 
 MainWindow::~MainWindow()
@@ -28,7 +27,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::slotConnected()
 {
-//    getVars->start(1500);
+    getVars->start();
 }
 
 void MainWindow::slotDisconnected()
@@ -38,14 +37,17 @@ void MainWindow::slotDisconnected()
 
 void MainWindow::slotReadyRead()
 {
+#ifdef DEBUG
     qDebug("READY_READ");
+#endif
     ui->textLines->append(client->getValueAll());
+    ui->upsLoad->setValue(client->getValue("ups.load").toInt());
 }
 
 void MainWindow::slotGetVars()
 {
     ui->textLines->clear();
-    client->sendCmd(QString("LIST VAR %1\n").arg("myups"));
+    client->refreshValues();
 }
 
 void MainWindow::slotError(QAbstractSocket::SocketError err)

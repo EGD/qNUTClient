@@ -18,6 +18,13 @@
     <item row="0" column="0">
      <widget class="QTextEdit" name="textLines"/>
     </item>
+    <item row="1" column="0">
+     <widget class="QProgressBar" name="upsLoad">
+      <property name="value">
+       <number>0</number>
+      </property>
+     </widget>
+    </item>
    </layout>
   </widget>
  </widget>
