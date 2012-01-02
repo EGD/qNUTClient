@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/icon">
+        <file>lo32-app-knutclient.png</file>
+    </qresource>
+</RCC>

@@ -4,6 +4,7 @@
 #include <QMainWindow>
 #include <QtGui>
 #include "upsclient.h"
+#include "qupsdock.h"
 
 namespace Ui {
     class MainWindow;
@@ -19,15 +20,10 @@ public:
 
 private:
     Ui::MainWindow *ui;
-    upsClient *client;
-    QTimer *getVars;
+    qUPSDock *trayIcon;
 
 private slots:
-    void slotConnected();
-    void slotDisconnected();
-    void slotReadyRead();
-    void slotGetVars();
-    void slotError(QAbstractSocket::SocketError);
+    void trayIconClicked(QSystemTrayIcon::ActivationReason);
 };
 
 #endif // MAINWINDOW_H
