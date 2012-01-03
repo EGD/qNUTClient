@@ -29,7 +29,7 @@ void upsClientModel::slotReadyRead()
     qDebug("READY_READ");
 #endif
     m_propertis.clear();
-    m_propertis << m_ups->getValueAll();
+    m_propertis = m_ups->getValueAll();
 
     emit dataChanged(QModelIndex(),QModelIndex());
 }
@@ -109,6 +109,9 @@ void upsClient::setPollTime(int poll_time)
 
 void upsClient::slotRefreshValues()
 {
+#ifndef QT_NO_DEBUG
+    qDebug("REFRESH");
+#endif
     sendCmd(QString(TMPL_GET_VARS).arg(ups_login));
 }
 
@@ -152,7 +155,7 @@ QString upsClient::getValue(QString key) const
     return data->contains(key) ? data->value(key) : QString("-1");
 }
 
-QString upsClient::getValueAll() const
+QList<QString> upsClient::getValueAll() const
 {
     return AllValues;
 }
@@ -188,27 +191,28 @@ void upsClient::slotDisconnected()
 void upsClient::slotReadyRead()
 {
     QTextStream in(m_Socket.readAll(), QIODevice::ReadOnly);
-
+    QString line(in.readLine());
     QRegExp templ("VAR \\w+ ((?:\\w+\\.?)+) \"(.*)\"");
-    AllValues.clear();
+
+    if (line.indexOf(QString("BEGIN LIST VAR")) != -1) {
+        AllValues.clear();
+        line = in.readLine();
+    }
 
     while (!in.atEnd()) {
-        QString line(in.readLine());
-
-        if (line.indexOf(QString("BEGIN LIST VAR")) != -1 ||
-                line.indexOf(QString("END LIST")) != -1) {
-            continue;
-        }
-
         templ.indexIn(line);
 
         if (templ.captureCount()) {
             (*data)[templ.cap(1)] = templ.cap(2);
-            AllValues.append(templ.cap(1)).append(": ").append(templ.cap(2)).append("\n");
+            AllValues << QString("%1: %2").arg(templ.cap(1)).arg(templ.cap(2));
         }
+
+        line = in.readLine();
     }
 
-    emit readyReadUPS();
+    if (line.indexOf(QString("END LIST")) != -1) {
+        emit readyReadUPS();
+    }
 }
 
 void upsClient::slotError(QAbstractSocket::SocketError err)

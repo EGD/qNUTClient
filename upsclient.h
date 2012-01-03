@@ -53,7 +53,7 @@ public:
 
 private:
     upsClient *m_ups;
-    QList<QVariant> m_propertis;
+    QList<QString> m_propertis;
 
 private slots:
     void slotReadyRead();
@@ -73,7 +73,7 @@ public:
     void disconnectFromUPS();
     QString errorString() const;
     QString getValue(QString value) const;
-    QString getValueAll() const;
+    QList<QString> getValueAll() const;
     bool isConnected();
 
 public slots:
@@ -103,7 +103,7 @@ private:
     QString ups_user;
     bool upsConnectedOk;
     QHash<QString, QString> *data;
-    QString AllValues;
+    QList<QString> AllValues;
 
 private slots:
     void slotConnected();
